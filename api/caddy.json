@@ -1,0 +1,62 @@
+{
+  "apps": {
+    "http": {
+      "servers": {
+        "proxy": {
+          "listen": [
+            ":443"
+          ],
+          "routes": [
+            {
+              "handle": [
+                {
+                  "handler": "reverse_proxy",
+                  "upstreams": [
+                    {
+                      "dial": "10.0.0.3:80"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "tls": {
+      "automation": {
+        "policies": [
+          {
+            "on_demand": true
+          }
+        ],
+        "on_demand": {
+          "rate_limit": {
+            "interval": "5s",
+            "burst": 2
+          },
+          "ask": "http://10.0.0.3:80/api/scopes/check"
+        }
+      }
+    }
+  },
+  "storage": {
+    "module": "file_system",
+    "root": "/etc/caddy/storage/"
+  },
+  "logging": {
+    "logs": {
+      "console": {
+        "exclude": [],
+        "encoder": {
+          "format": "console"
+        },
+        "writer": {
+          "output": "file",
+          "filename": "/var/log/caddy.log"
+        },
+        "level": "DEBUG"
+      }
+    }
+  }
+}
