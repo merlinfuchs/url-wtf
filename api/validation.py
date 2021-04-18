@@ -12,7 +12,8 @@ __all__ = (
     "CREATE_FILE_SCHEMA",
     "AUTH_DISCORD_SCHEMA",
     "CREATE_SCOPE_SCHEMA",
-    "CREATE_PASTE_SCHEMA"
+    "CREATE_PASTE_SCHEMA",
+    "AUTH_GITHUB_SCHEMA"
 )
 
 
@@ -30,7 +31,6 @@ def validate_json(schema):
             try:
                 to_validate = req.json
             except InvalidUsage:
-                print(req.form)
                 raw = req.form.get("json")
                 if raw is not None:
                     try:
@@ -62,7 +62,7 @@ CREATE_URL_SCHEMA = {
         "default": "default",
         "empty": False
     },
-    "name": {"type": "string", "empty": False},
+    "name": {"type": "string", "empty": False, "nullable": True},
     "scope": {"type": "string", "default": "url.wtf", "empty": False},
 }
 
@@ -73,7 +73,7 @@ CREATE_FILE_SCHEMA = {
         "default": "default",
         "empty": False
     },
-    "name": {"type": "string", "empty": False},
+    "name": {"type": "string", "empty": False, "nullable": True},
     "scope": {"type": "string", "default": "url.wtf", "empty": False},
 }
 
@@ -84,16 +84,19 @@ CREATE_PASTE_SCHEMA = {
         "default": "default",
         "empty": False
     },
-    "name": {"type": "string", "empty": False},
+    "name": {"type": "string", "empty": False, "nullable": True},
     "scope": {"type": "string", "default": "url.wtf", "empty": False},
-    "text": {"type": "string", "empty": False, "required": True},
-    "file_type": {"type": "string", "empty": False}
+    "text": {"type": "string", "empty": False, "required": True}
+}
+
+CREATE_SCOPE_SCHEMA = {
+    "name": {"type": "string", "empty": False, "regex": r"[a-zA-Z0-9\._-]+", "required": True}
 }
 
 AUTH_DISCORD_SCHEMA = {
     "code": {"type": "string", "empty": False, "required": True}
 }
 
-CREATE_SCOPE_SCHEMA = {
-    "name": {"type": "string", "empty": False, "regex": r"[a-zA-Z0-9\._-]+", "required": True}
+AUTH_GITHUB_SCHEMA = {
+    "code": {"type": "string", "empty": False, "required": True}
 }

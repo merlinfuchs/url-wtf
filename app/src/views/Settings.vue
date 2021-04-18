@@ -129,7 +129,7 @@
                     <div class="mt-5">
                         <div class="flex">
                             <input class="w-5 bg-gray-darkest flex-auto px-3 py-2 rounded-lg placeholder-gray-500"
-                                   placeholder="Repeat your Email" type="email"/>
+                                   placeholder="Repeat your Email" type="email" v-model="repeatEmail"/>
                             <button class="block bg-red-700 flex-initial ml-4 rounded-lg px-3 py-2"
                                     @click="deleteAccount">
                                 Delete Account
@@ -146,7 +146,8 @@
     export default {
         data() {
             return {
-                newDomain: ''
+                newDomain: '',
+                repeatEmail: ''
             }
         },
         methods: {
@@ -168,7 +169,16 @@
                 document.execCommand('copy')
             },
             deleteAccount() {
+                if (this.repeatEmail.trim() !== this.$store.state.user.email) {
+                    this.$store.dispatch('notify', {
+                        text: 'The email does not match the email of your account.',
+                        type: 'error'
+                    })
+                    return
+                }
 
+                this.$store.dispatch('deleteAccount')
+                    .then(() => this.$router.push('/'))
             }
         },
         computed: {

@@ -27,13 +27,21 @@ module.exports = {
         '144': '36rem',
         '160': '40rem',
         '176': '44rem',
-        '192': '48rem'
+        '192': '48rem',
+        '208': '52rem',
+        '224': '56rem',
+        '240': '60rem',
+        '256': '64rem',
+        '304': '76rem'
+      },
+      animation: {
+        'spin-slow': 'spin 2s linear infinite'
       }
     },
   },
   variants: {
     extend: {
-      display: ['group-hover'],
+      display: ['group-hover']
     },
   },
   plugins: [],

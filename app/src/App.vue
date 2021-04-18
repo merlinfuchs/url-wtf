@@ -1,5 +1,24 @@
 <template>
     <div id="app" class="bg-gray-darkest w-screen overflow-hidden text-gray-100 m-0">
+        <div class="fixed top-0 right-0 grid justify-items-end">
+            <div class="w-full sm:w-128 px-5 pt-5">
+                <div v-for="(notification, i) in $store.state.notifications" :key="`notification-${i}`"
+                     class="px-5 py-4 rounded-lg mb-3 opacity-95 font-semibold tracking-wide"
+                     :class="{'bg-red-500': notification.type === 'error', 'bg-blue-500': notification.type === 'info',
+                     'bg-green-500': notification.type === 'success'}">
+                    {{notification.text}}
+                </div>
+            </div>
+        </div>
+
+        <div class="fixed w-screen h-screen grid justify-items-center top-0 right-0 pt-56 bg-gray-darkest bg-opacity-60"
+             :class="{hidden: !contactVisible}" @click="contactVisible = false">
+            <div class="bg-gray-dark w-128 h-192 rounded-lg py-5 px-5" v-on:click.stop>
+                <h3 class="text-center text-3xl">Contact</h3>
+                <button class="py-2 px-3 bg-gray-darker rounded-md" @click="contactVisible = false">Close</button>
+            </div>
+        </div>
+
         <div class="min-h-screen">
             <nav class="flex items-center justify-between w-full flex-wrap px-8 py-5 bg-gray-darker md:bg-transparent">
                 <router-link to="/" class="mr-7">
@@ -24,10 +43,10 @@
                                      class="block mb-4 md:my-0 md:inline-block md:mt-0 hover:text-red-300 mr-5"
                                      active-class="text-red-300">Images
                         </router-link>
-                        <router-link to="/pastes"
+                        <!-- <router-link to="/pastes"
                                      class="block mb-4 md:my-0 md:inline-block md:mt-0 hover:text-red-300 mr-5"
                                      active-class="text-red-300">Pastes
-                        </router-link>
+                        </router-link> -->
                         <router-link to="/api"
                                      class="block mb-4 md:my-0 md:inline-block md:mt-0 hover:text-red-300 mr-5"
                                      active-class="text-red-300">API
@@ -66,7 +85,7 @@
                     </div>
                 </div>
             </nav>
-            <transition class="fade">
+            <transition name="fade" mode="out-in">
                 <router-view/>
             </transition>
             <div class="h-52"></div>
@@ -79,12 +98,12 @@
                     <div class="text-xl">Copyright <span class="font-bold">©</span> 2021 <span
                             class="font-bold">url.wtf</span></div>
                     <div class="mt-2 text-red-300">
-                        <router-link to="/request">Contact & Takedown</router-link>
+                        <button @click="contactVisible = true">Contact & Takedown</button>
                     </div>
                 </div>
                 <div class="flex-none w-full md:w-1/2">
                     <div class="text-blue-200">
-                        <router-link to="/privacy" class="mr-3">Terms of Service</router-link>
+                        <router-link to="/terms" class="mr-3">Terms of Service</router-link>
                         <router-link to="/privacy">Privacy Policy</router-link>
                     </div>
                     <div class="mt-2">
@@ -102,7 +121,8 @@
     export default {
         data() {
             return {
-                menuVisible: false
+                menuVisible: false,
+                contactVisible: false,
             }
         },
         created() {

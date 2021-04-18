@@ -1,9 +1,12 @@
 from sanic import Sanic, response
+from sanic.request import Request
 from sanic.exceptions import SanicException, MethodNotSupported
 from aiohttp import ClientSession
 import aioredis
 from motor.motor_asyncio import AsyncIOMotorClient
 import json
+import aioinflux
+import asyncio
 
 import routes
 from database import LinkDatabase
@@ -17,6 +20,26 @@ CORS_HEADERS = {
 }
 
 
+class CustomRequest(Request):
+    __slots__ = ("user",)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = None
+
+    @property
+    def redis(self):
+        return self.app.redis
+
+    @property
+    def db(self):
+        return self.app.db
+
+    @property
+    def session(self):
+        return self.app.session
+
+
 class App(Sanic):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -25,6 +48,7 @@ class App(Sanic):
         self.db = None
         self.links = None
         self.session = None
+        self.influx = None
 
         self.blueprint(routes.bp)
         self.error_handler.add(SanicException, self.on_http_error)
@@ -42,6 +66,12 @@ class App(Sanic):
         self.links = LinkDatabase(self)
         await self.links.create_indexes()
         self.session = ClientSession(loop=loop)
+        self.influx = aioinflux.InfluxDBClient(
+            host=getattr(self.config, "INFLUX_HOST", "127.0.0.1"),
+            database="url_wtf",
+            loop=loop
+        )
+        await self.influx.create_database(db="url_wtf")
 
         caddy_url = getattr(self.config, "CADDY_URL", None)
         if caddy_url is not None:
@@ -55,22 +85,20 @@ class App(Sanic):
         self.redis.close()
         await self.redis.wait_closed()
         await self.session.close()
+        await self.influx.close()
 
     async def on_http_error(self, request, e):
         if isinstance(e, MethodNotSupported) and request.method == "OPTIONS":
             return response.HTTPResponse(headers=CORS_HEADERS)
 
-        return response.json({"text ": str(e)}, status=getattr(e, "status_code", 500))
+        return response.json({"text": str(e)}, status=getattr(e, "status_code", 500))
 
     async def cors_middleware(self, _, resp):
         resp.headers.update(CORS_HEADERS)
 
 
 if __name__ == "__main__":
-    app = App(name="url.wtf", load_env="APP_", strict_slashes=False)
-    if not DEBUG:
-        app.config.PROXIES_COUNT = 2
-    else:
-        app.config.FILE_LOCATION = "./files"
-
-    app.run(host="127.0.0.1", port=8000, access_log=True, debug=DEBUG, auto_reload=DEBUG)
+    app = App(name="url.wtf", load_env="APP_", strict_slashes=False, request_class=CustomRequest)
+    app.config.PROXIES_COUNT = 2
+    app.config.FILE_LOCATION = "./files"
+    app.run(host="127.0.0.1", port=8000, access_log=True, debug=DEBUG, auto_reload=False)

@@ -14,12 +14,14 @@ const routes = [
     {
         path: '/images',
         name: 'Images',
-        component: () => import(/* webpackChunkName: "images" */ './views/Images.vue')
+        component: () => import(/* webpackChunkName: "images" */ './views/Images.vue'),
+        meta: {requiresLogin: true}
     },
     {
         path: '/pastes',
         name: 'Pastes',
-        component: () => import(/* webpackChunkName: "pastes" */ './views/Pastes.vue')
+        component: () => import(/* webpackChunkName: "pastes" */ './views/Pastes.vue'),
+        meta: {requiresLogin: true}
     },
     {
         path: '/api',
@@ -33,6 +35,12 @@ const routes = [
         meta: {requiresLogin: true}
     },
     {
+        path: '/stats/:id',
+        name: 'Stats',
+        component: () => import(/* webpackChunkName: "stats" */ './views/Stats.vue'),
+        meta: {requiresLogin: true}
+    },
+    {
         path: '/login',
         name: 'Login',
         component: () => import(/* webpackChunkName: "login" */ './views/Login.vue')
@@ -41,6 +49,16 @@ const routes = [
         path: '/login/callback/:platform',
         name: 'Login',
         component: () => import(/* webpackChunkName: "login_callback" */ './views/LoginCallback.vue')
+    },
+    {
+        path: '/terms',
+        name: 'Terms',
+        component: () => import(/* webpackChunkName: "terms" */ './views/Terms.vue')
+    },
+    {
+        path: '/privacy',
+        name: 'Privacy',
+        component: () => import(/* webpackChunkName: "privacy" */ './views/Privacy.vue')
     }
 ]
 

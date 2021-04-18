@@ -74,7 +74,7 @@ class LinkDatabase:
             "scope": scope,
             "target": file_name
         })
-        await self.redis.setex(f"links:{scope}:{name}", 24 * 60 * 60, f"{LinkType.FILE}:{file_name}")
+        # await self.redis.setex(f"links:{scope}:{name}", 24 * 60 * 60, f"{LinkType.FILE}:{file_name}")
         return str(result.inserted_id), file_name
 
     async def resolve_link(self, scope, name):
@@ -87,5 +87,5 @@ class LinkDatabase:
         if doc is None:
             return None, None
 
-        await self.redis.setex(f"links:{scope}:{name}", 24 * 60 * 60, f"{doc['type']}:{doc['target']}")
+        # await self.redis.setex(f"links:{scope}:{name}", 24 * 60 * 60, f"{doc['type']}:{doc['target']}")
         return doc["type"], doc["target"]

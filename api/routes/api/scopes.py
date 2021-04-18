@@ -11,13 +11,20 @@ from auth import *
 from validation import *
 from database import *
 from ratelimits import *
+from cache import *
 
 
 bp = Blueprint("/scopes", url_prefix="/scopes")
+scopes_cache = Cache(minutes=1)
+scope_cache = Cache(minutes=1, params=True)
 
 
 @bp.listener("after_server_start")
-async def verify_loop(app, _):
+async def _on_server_start(app, loop):
+    app.add_task(_verify_loop(app))
+
+
+async def _verify_loop(app):
     await app.db.scopes.create_index([("name", pymongo.ASCENDING)], unique=True)
 
     while app.is_running:
@@ -46,7 +53,7 @@ async def verify_loop(app, _):
 @bp.post("/")
 @resolve_user(required=True)
 @validate_json(CREATE_SCOPE_SCHEMA)
-@rate_limit(burst=5, seconds=5, bucket=RouteBucket.TOKEN)
+@rate_limit(burst=5, seconds=5)
 async def _create_custom_scope(req, user, data):
     try:
         await req.app.db.scopes.insert_one({
@@ -60,12 +67,14 @@ async def _create_custom_scope(req, user, data):
     except pymongo.errors.DuplicateKeyError:
         return abort(400, "A scope with that name already exists")
 
+    await scopes_cache.delete(req)
     return abort(200)
 
 
 @bp.get("/")
 @resolve_user()
-@rate_limit(burst=3, seconds=5, bucket=RouteBucket.IP)
+@rate_limit(burst=3, seconds=5)
+@use_cache(scopes_cache)
 async def _get_custom_scopes(req, user):
     scopes = [
         {
@@ -78,34 +87,37 @@ async def _get_custom_scopes(req, user):
             del scope["_id"]
             scopes.append(scope)
 
-    return response.json(scopes)
+    return CacheValue(scopes)
 
 
 @bp.get("/<name>")
 @resolve_user(required=True)
-@rate_limit(burst=5, seconds=5, bucket=RouteBucket.TOKEN)
+@rate_limit(burst=5, seconds=5)
+@use_cache(scope_cache)
 async def _get_custom_scope(req, name, user):
     doc = await req.app.db.scopes.find_one({"name": name, "user_ids": user["id"]})
     if doc is None:
         return abort(404, "Unknown scope")
 
     del doc["_id"]
-    return response.json(doc)
+    return CacheValue(doc)
 
 
 @bp.delete("/<name>")
 @resolve_user(required=True)
-@rate_limit(burst=3, seconds=5, bucket=RouteBucket.TOKEN)
+@rate_limit(burst=3, seconds=5)
 async def _delete_custom_scope(req, name, user):
     result = await req.app.db.scopes.delete_one({"name": name, "owner_id": user["id"]})
     if result.deleted_count == 0:
         return abort(404, "Unknown scope")
 
+    await scopes_cache.delete(req)
+    await scope_cache.delete(req)
     return abort(200)
 
 
 @bp.get("/check")
-@rate_limit(burst=20, seconds=5, bucket=RouteBucket.IP)
+@rate_limit(burst=20, seconds=5)
 async def _caddy_ask(req):
     scope = req.args.get("domain")
     if not scope:

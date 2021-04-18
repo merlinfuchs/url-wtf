@@ -37,6 +37,7 @@ def resolve_user(required=False):
             if user is None and required:
                 return abort(401, "Token required")
 
+            req.user = user
             return await handler(req, *args, **kwargs, user=user)
         return _check_auth
     return _predicate
@@ -54,7 +55,14 @@ async def reset_token(app, user_id):
 async def login_user(app, email, name):
     doc = await app.db.users.find_one_and_update(
         {"email": email},
-        {"$set": {"name": name}, "$setOnInsert": {"token_reset": datetime.utcnow(), "_id": get_snowflake()}},
+        {
+            "$set": {"name": name},
+            "$setOnInsert": {
+                "_id": get_snowflake(),
+                "token_reset": datetime.utcnow(),
+                "premium_level": 0
+            }
+        },
         return_document=pymongo.ReturnDocument.AFTER,
         upsert=True
     )

@@ -1,21 +1,26 @@
 from sanic import Blueprint, response
 from sanic.exceptions import abort
 import pymongo.errors
+import imghdr
 
 from validation import *
 from util import *
 from database import *
 from auth import *
 from ratelimits import *
+from cache import *
 
 
-bp = Blueprint("api_files", url_prefix="/files")
+bp = Blueprint("api_files", url_prefix="/images")
+scope_cache = Cache(minutes=1, params=True)
 
 
-@bp.get("/<scope>/<name>")
-@rate_limit(burst=10, seconds=5, bucket=RouteBucket.TOKEN)
-async def _get_file(req, scope, name):
-    doc = await req.app.db.links.find_one({"scope": scope, "name": name, "type": LinkType.URL})
+@bp.get("/<file_id>")
+@resolve_user(required=True)
+@rate_limit(burst=10, seconds=5)
+@use_cache(scope_cache)
+async def _get_file(req, file_id, user):
+    doc = await req.app.db.links.find_one({"_id": file_id, "type": LinkType.URL, "user_id": user["id"]})
     if doc is None:
         return response.json({"error": "Unknown URL"}, status=404)
 
@@ -24,13 +29,13 @@ async def _get_file(req, scope, name):
 
     del doc["user_id"]
     doc["id"] = doc.pop("_id")
-    return response.json(doc)
+    return CacheValue(doc)
 
 
 @bp.post("/")
 @resolve_user(required=True)
 @validate_json(CREATE_FILE_SCHEMA)
-@rate_limit(burst=5, seconds=5, bucket=RouteBucket.TOKEN)
+@rate_limit(burst=5, seconds=5)
 async def _create_file(req, user, data):
     if data["type"] == "custom":
         name = data["name"]
@@ -39,7 +44,11 @@ async def _create_file(req, user, data):
 
     file = req.files.get("file")
     if file is None:
-        return response.json({"error": "A file is required"}, status=400)
+        return abort(400, "A file is required")
+
+    img_type = imghdr.what(None, h=file.body)
+    if img_type is None:
+        return abort(400, "Invalid image type")
 
     user_id = None
     if user is not None:
@@ -57,10 +66,9 @@ async def _create_file(req, user, data):
             if user is None or user["id"] not in doc["user_ids"]:
                 return abort(403, "Missing access to scope")
 
-    file_extension = file.name.rsplit(".")[-1]
     try:
         data["id"], data["target"] = await req.app.links.create_file(
-            data["scope"], name, file_extension, file.body, user_id=user_id
+            data["scope"], name, img_type, file.body, user_id=user_id
         )
     except pymongo.errors.DuplicateKeyError:
         return abort(400, "There is already an URL with that name")
