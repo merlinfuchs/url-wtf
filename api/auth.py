@@ -44,7 +44,7 @@ def resolve_user(required=False):
 
 
 def make_auth_token(app, user_id):
-    return jwt.encode({"u": user_id, "t": int(datetime.utcnow().timestamp()) + 30}, key=app.config.JWT_KEY)
+    return jwt.encode({"u": user_id, "t": int(datetime.utcnow().timestamp()) + 30}, key=app.config.JWT_KEY).decode("utf-8")
 
 
 async def reset_token(app, user_id):
