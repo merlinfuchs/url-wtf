@@ -1,12 +1,13 @@
 <template>
-    <div class="grid justify-items-center mt-20">
+    <div class="grid justify-items-center my-20">
         <div class="grid grid-cols-2 w-full xl:w-256 px-5 xl:px-0 gap-5">
             <div class="bg-gray-dark col-span-2 p-5">
                 <div class="text-3xl font-thin text-center">
-                    <span class="font-normal">5</span>
+                    <span v-if="clicks" class="font-normal">{{Object.values(this.clicks).reduce((a, b) => a + b)}}</span>
+                    <span class="font-normal" v-else>0</span>
                     total clicks in the last 24 hours
                 </div>
-                <div class="-mb-12">
+                <div class="mt-10">
                     <canvas ref="clicksCanvas"/>
                 </div>
             </div>
@@ -40,10 +41,11 @@
             }
         },
         created() {
-            this.$store.dispatch('getStats', {id: this.$route.params.id, period: 'day'})
+            this.$store.dispatch('getStats', {id: this.$route.params.id, period: '24h'})
                 .then(data => {
                     this.browser = data.browser
                     this.os = data.os
+                    this.clicks = data.clicks
 
                     this.updateCharts()
                 })
@@ -97,6 +99,35 @@
                         plugins: {
                             legend: {
                                 position: 'left',
+                                labels: {
+                                    color: '#fff',
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            }
+                        }
+                    }
+                })
+
+                new Chart(this.$refs.clicksCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: Object.keys(this.clicks),
+                        datasets: [
+                            {
+                                label: 'Clicks',
+                                data: Object.values(this.clicks),
+                                borderColor: '#1c1c2f',
+                                backgroundColor: chartColors[0],
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
                                 labels: {
                                     color: '#fff',
                                     font: {

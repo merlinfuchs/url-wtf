@@ -1,4 +1,4 @@
-# app
+# App for url.wtf
 
 ## Project setup
 ```

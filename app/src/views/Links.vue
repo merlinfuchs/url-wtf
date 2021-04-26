@@ -32,8 +32,8 @@
                                     <label>Domain</label>
                                     <router-link to="/settings" class="ml-2">
                                         <button class="w-6 h-6 bg-gray-dark rounded-full text-sm">
-                                        <i class="fas fa-plus"/>
-                                    </button>
+                                            <i class="fas fa-plus"/>
+                                        </button>
                                     </router-link>
                                 </div>
                                 <select v-model="scope"
@@ -95,10 +95,12 @@
                 </div>
             </div>
         </div>
-        <div v-else-if="urls.length === 0"></div>
         <div v-else class="grid bg-gray-darker pt-16 md:pt-0 pb-40 justify-items-center">
             <div class="w-full md:w-176 px-3">
-                <transition-group name="fade">
+                <div v-if="urls.length === 0" class="text-4xl text-center">
+                    <div>You don't have any links yet ...</div>
+                </div>
+                <transition-group v-else name="fade">
                     <div v-for="url in urls" :key="url.id" class="bg-gray-dark p-5 rounded-lg mb-5">
                         <div class="flex">
                             <div class="grid grid-cols-2 flex-auto">
