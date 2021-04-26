@@ -100,5 +100,5 @@ class App(Sanic):
 if __name__ == "__main__":
     app = App(name="url.wtf", load_env="APP_", strict_slashes=False, request_class=CustomRequest)
     app.config.PROXIES_COUNT = 2
-    app.config.FILE_LOCATION = "./files"
-    app.run(host="127.0.0.1", port=8000, access_log=True, debug=DEBUG, auto_reload=False)
+    # app.config.FILE_LOCATION = "./files"
+    app.run(host="127.0.0.1", port=8001, access_log=True, debug=DEBUG, auto_reload=False)
