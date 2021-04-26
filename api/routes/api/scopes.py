@@ -1,9 +1,5 @@
-from sanic import Blueprint, response
+from sanic import Blueprint
 from sanic.exceptions import abort
-import async_dns.resolver
-from async_dns.core import types as dnc_types
-import asyncio
-import traceback
 import pymongo
 import pymongo.errors
 
@@ -17,37 +13,6 @@ from cache import *
 bp = Blueprint("/scopes", url_prefix="/scopes")
 scopes_cache = Cache(minutes=1)
 scope_cache = Cache(minutes=1, params=True)
-
-
-@bp.listener("after_server_start")
-async def _on_server_start(app, loop):
-    app.add_task(_verify_loop(app))
-
-
-async def _verify_loop(app):
-    await app.db.scopes.create_index([("name", pymongo.ASCENDING)], unique=True)
-
-    while app.is_running:
-        await asyncio.sleep(60)
-        resolver = async_dns.resolver.Resolver()
-        async for scope in app.db.scopes.find({"verified": False}):
-            try:
-                result = await resolver.query_safe(scope["name"], dnc_types.TXT)
-                if result is None:
-                    continue
-
-                for record in filter(lambda r: r.qtype == dnc_types.TXT, result.an):
-                    text = record.data.decode().strip()
-                    parts = text.split("=")
-                    if parts[0] != "url.wtf" or len(parts) != 2:
-                        continue
-
-                    if parts[1] == scope["owner_id"]:
-                        # TODO: call certbot
-                        await app.db.scopes.update_one({"_id": scope["_id"]}, {"$set": {"verified": True}})
-                        break
-            except:
-                traceback.print_exc()
 
 
 @bp.post("/")
