@@ -39,10 +39,10 @@
                                      class="block mb-4 md:my-0 md:inline-block md:mt-0 hover:text-red-300 mr-5"
                                      active-class="text-red-300">Pastes
                         </router-link> -->
-                        <router-link to="/api"
+                        <!-- <router-link to="/api"
                                      class="block mb-4 md:my-0 md:inline-block md:mt-0 hover:text-red-300 mr-5"
                                      active-class="text-red-300">API
-                        </router-link>
+                        </router-link> -->
                         <span class="mt-4 md:mt-0 md:inline-flex flex flex-row">
                         <a href="/discord" class="mr-4 block md:inline-block hover:text-red-300" target="_blank">
                             <i class="fab fa-discord"/>
