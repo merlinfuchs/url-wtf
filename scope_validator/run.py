@@ -24,7 +24,8 @@ async def validate_scope(resolver, scope):
 
         if parts[1] == scope["owner_id"]:
             result = await loop.run_in_executor(None, subprocess.run, [
-                "certbot", "certonly", "--webroot", "-w", "/var/www/html/certs", "-d", scope["name"]
+                "certbot", "certonly", "--webroot", "-w", "/var/www/html/certs", "-d", scope["name"],
+                "--non-interactive"
             ])
             if result.returncode == 0:
                 await db.scopes.update_one({"_id": scope["_id"]}, {"$set": {"verified": True}})
