@@ -1,0 +1,7 @@
+sanic
+aiohttp
+aioredis
+motor
+aioinflux
+cerberus
+ua_parser
